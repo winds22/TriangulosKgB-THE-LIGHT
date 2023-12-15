@@ -210,6 +210,13 @@ int is_facing(hiruki * tri, punto p){
     return 1;
 }
 
+void vertex_2_point(punto * p, vertex v){
+    p->u = v.u;
+    p->v = v.v;
+    p->x = v.coord.x;
+    p->y = v.coord.y;
+    p->z = v.coord.z;
+}
 
 void objektuari_aldaketa_sartu_ezk(double m[16])
 {
@@ -324,6 +331,8 @@ if (dify >0){
 
 }
 
+//THE OLD
+/*
 void dibujar_triangulo(triobj *optr, int i)
 {
 hiruki *tptr;
@@ -420,16 +429,116 @@ for(int i=perdiptr->y;i>pbeheptr->y;i--){
     dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v,optr->has_color,optr->rgb);
 }
 }
+*/
 
+//THE NEW
+void dibujar_triangulo(vertex vx1, vertex vx2, vertex vx3, object3d * obj)
+{
+hiruki *tptr;
+punto *pgoiptr, *pbeheptr, *perdiptr, *middle;
+float x1,h1,z1,u1,v1,x2,h2,z2,u2,v2,x3,h3,z3,u3,v3;
+float c1x,c1z,c1u,c1v,c2x,c2z,c2u,c2v,tald,qald,sald;
+int linea,t,q,s,xpersp,ypersp,zpersp;
+float cambio1,cambio1z,cambio1u,cambio1v,cambio2,cambio2z,cambio2u,cambio2v;
+punto p1,p2,p3,p_sar,p_irt,p_help,pp1,pp2,pp3;
+vertex_2_point(&p1,vx1);
+vertex_2_point(&p2,vx2);
+vertex_2_point(&p3,vx3);
+
+matrix_calc(modelview,camera->m_esa,mx_obj);
+mxp(&p1,modelview,tptr->p1);
+mxp(&p2,modelview,tptr->p2);
+mxp(&p3,modelview,tptr->p3); //optr->mptr->m //optr->modelview
+
+
+if (perspective){
+    //matrix_calc(modelview2,projection_mx,modelview);
+    xpersp=mxprojection(&p1,projection_mx,p1);
+    ypersp=mxprojection(&p2,projection_mx,p2);
+    zpersp=mxprojection(&p3,projection_mx,p3);
+    if (xpersp==0 || ypersp==0 || zpersp == 0){
+        return;
+    }
+}
+
+calc_v_normal(tptr, p1,p2,p3);
+//is_facing(tptr);
+
+if (show_normal_v) {
+    glBegin(GL_LINES);
+    glVertex3d(p1.x,p1.y,p1.z);
+    glVertex3d(p1.x+(100*tptr->bek_normal.x),p1.y+(100*tptr->bek_normal.y),p1.z+(100*tptr->bek_normal.z));
+    glEnd();
+}
+
+int is_facing_val = is_facing(tptr, p1);
+
+if (lineak == 1){
+    if (is_facing_val) {
+        glBegin(GL_POLYGON);
+        glColor3ub(255,255,255);
+        glVertex3d(p1.x, p1.y, p1.z);
+        glVertex3d(p2.x, p2.y, p2.z);
+        glVertex3d(p3.x, p3.y, p3.z);
+        glEnd();
+        return;
+    }else if (!is_facing_val && back_culling){
+        glBegin(GL_POLYGON);
+        glColor3ub(255,0,0);
+        glVertex3d(p1.x, p1.y, p1.z);
+        glVertex3d(p2.x, p2.y, p2.z);
+        glVertex3d(p3.x, p3.y, p3.z);
+        glEnd();
+        return;
+    }
+    return;
+}
+        
+        //  else 
+  
+if(p1.y >=p2.y) {pgoiptr = &(p1); pbeheptr = &(p2);}
+else{pgoiptr = &(p2); pbeheptr = &(p1);}
+if(p3.y >= pgoiptr->y) {perdiptr = pgoiptr;pgoiptr = &(p3);}
+else if(p3.y<pbeheptr->y){perdiptr=pbeheptr; pbeheptr = &(p3);}
+else{perdiptr=&(p3);};
+
+if(perdiptr->y == pbeheptr->y && perdiptr->x>=pbeheptr->x){
+    middle = perdiptr;
+    perdiptr = pbeheptr;
+    pbeheptr = middle;
+}
+if(perdiptr->y==pgoiptr->y && pgoiptr->x<=perdiptr->x){
+    middle = perdiptr;
+    perdiptr = pgoiptr;
+    pgoiptr = middle;
+
+}
+
+for(int i= pgoiptr->y;i>perdiptr->y;i--){
+    ebakidura_kalk(pgoiptr, perdiptr, i, &p_sar);
+    ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
+    if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
+    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v,optr->has_color,optr->rgb);
+}
+for(int i=perdiptr->y;i>pbeheptr->y;i--){
+    ebakidura_kalk(perdiptr, pbeheptr, i, &p_sar);
+    ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
+    if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
+    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v,optr->has_color,optr->rgb);
+}
+}
+
+//THE OLD 
+/*
 static void marraztu(void)
 {
 float u,v;
 int i,j;
 triobj *auxptr;
-/*
+
 unsigned char* colorv;
 unsigned char r,g,b;
-*/
+
 
   // marrazteko objektuak behar dira
   // no se puede dibujar sin objetos
@@ -447,7 +556,7 @@ glLoadIdentity();
 glOrtho(-500.0, 500.0, -500.0, 500.0, -500, 500.0);
 
 
-triangulosptr = sel_ptr->triptr;
+//triangulosptr = sel_ptr->triptr;
 if (objektuak == 1)
     {
     if (denak == 1)
@@ -473,6 +582,45 @@ if (objektuak == 1)
      dibujar_triangulo(sel_ptr,indexx);
     }
 glFlush();
+}
+*/
+
+//THE NEW
+static void marraztu(void){
+    object3d * next_object;
+    face next_face;
+    vertex vertex1,vertex2,vertex3;
+    int i,j;
+    if (foptr ==0) return;
+
+    // clear viewport...
+    if (objektuak == 1) glClear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT );
+        else 
+        {
+        if (denak == 0) glClear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT );
+        }
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-500.0, 500.0, -500.0, 500.0, -500, 500.0);
+
+    if (objektuak){
+        if (denak){
+            for(next_object = foptr; next_object!=0; next_object=next_object->hptr){
+                for (i = 0; i<=next_object->num_faces;i++){
+                    next_face = next_object->face_table[i];
+                    vertex1 = next_object->vertex_table[next_face.vertex_ind_table[0]];
+                    for (j=2; j<=next_face.num_vertices;j++){
+                        vertex2 = next_object->vertex_table[next_face.vertex_ind_table[j-1]];
+                        vertex3 = next_object->vertex_table[next_face.vertex_ind_table[j]];
+                        
+                        dibujar_triangulo(vertex1,vertex2,vertex3,next_object);
+                        //TODO: DRAW TRIANGLE
+                    }
+                }
+            }
+        }
+    }
 }
 
 void read_from_file(char *fitx)
