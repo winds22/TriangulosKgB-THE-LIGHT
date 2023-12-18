@@ -244,7 +244,7 @@ lag = (unsigned char *)bufferra;  // pixel on the left and top
 return(lag+3*desplazamendua);
 }
 
-void  dibujar_linea_z(int linea,float c1x, float c1z, float c1u,float c1v,float c2x,float c2z,float c2u,float c2v, int has_color, unsigned char *rgb)
+void  dibujar_linea_z(int linea,float c1x, float c1z, float c1u,float c1v,float c2x,float c2z,float c2u,float c2v)
 {
 float xkoord,zkoord;
 float u,v,t,dt,cx,cz,cu,cv;
@@ -263,9 +263,6 @@ if (c2x == c1x){
 
 for (xkoord = c1x, zkoord=c1z, u=c1u, v=c1v, t=1; xkoord<=c2x; xkoord++, t= t-dt)
     {
-    if (has_color){
-        colorv = rgb;
-    }else{
         colorv = color_textura(u,v);
     }
     r= colorv[0];
@@ -281,7 +278,6 @@ for (xkoord = c1x, zkoord=c1z, u=c1u, v=c1v, t=1; xkoord<=c2x; xkoord++, t= t-dt
     v = t*c1v + (1-t)*c2v;
     zkoord = t*c1z + (1-t)*c2z;
     //zkoord = 0.0;
-    }
 glEnd();
 }
 
@@ -440,15 +436,15 @@ float x1,h1,z1,u1,v1,x2,h2,z2,u2,v2,x3,h3,z3,u3,v3;
 float c1x,c1z,c1u,c1v,c2x,c2z,c2u,c2v,tald,qald,sald;
 int linea,t,q,s,xpersp,ypersp,zpersp;
 float cambio1,cambio1z,cambio1u,cambio1v,cambio2,cambio2z,cambio2u,cambio2v;
-punto p1,p2,p3,p_sar,p_irt,p_help,pp1,pp2,pp3;
+punto p1,p2,p3,p_sar,p_irt,p_help;
 vertex_2_point(&p1,vx1);
 vertex_2_point(&p2,vx2);
 vertex_2_point(&p3,vx3);
 
-matrix_calc(modelview,camera->m_esa,mx_obj);
-mxp(&p1,modelview,tptr->p1);
-mxp(&p2,modelview,tptr->p2);
-mxp(&p3,modelview,tptr->p3); //optr->mptr->m //optr->modelview
+matrix_calc(modelview,camera->m_esa,obj->mptr->m);
+mxp(&p1,modelview,p1);
+mxp(&p2,modelview,p2);
+mxp(&p3,modelview,p3); //optr->mptr->m //optr->modelview
 
 
 if (perspective){
@@ -461,9 +457,9 @@ if (perspective){
     }
 }
 
-calc_v_normal(tptr, p1,p2,p3);
+//calc_v_normal(tptr, p1,p2,p3);
 //is_facing(tptr);
-
+/*
 if (show_normal_v) {
     glBegin(GL_LINES);
     glVertex3d(p1.x,p1.y,p1.z);
@@ -472,7 +468,8 @@ if (show_normal_v) {
 }
 
 int is_facing_val = is_facing(tptr, p1);
-
+*/
+int is_facing_val = 1;
 if (lineak == 1){
     if (is_facing_val) {
         glBegin(GL_POLYGON);
@@ -493,7 +490,7 @@ if (lineak == 1){
     }
     return;
 }
-        
+       
         //  else 
   
 if(p1.y >=p2.y) {pgoiptr = &(p1); pbeheptr = &(p2);}
@@ -518,13 +515,13 @@ for(int i= pgoiptr->y;i>perdiptr->y;i--){
     ebakidura_kalk(pgoiptr, perdiptr, i, &p_sar);
     ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
     if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
-    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v,optr->has_color,optr->rgb);
+    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v);
 }
 for(int i=perdiptr->y;i>pbeheptr->y;i--){
     ebakidura_kalk(perdiptr, pbeheptr, i, &p_sar);
     ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
     if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
-    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v,optr->has_color,optr->rgb);
+    dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v);
 }
 }
 
@@ -607,10 +604,10 @@ static void marraztu(void){
     if (objektuak){
         if (denak){
             for(next_object = foptr; next_object!=0; next_object=next_object->hptr){
-                for (i = 0; i<=next_object->num_faces;i++){
+                for (i = 0; i<=next_object->num_faces-1;i++){
                     next_face = next_object->face_table[i];
                     vertex1 = next_object->vertex_table[next_face.vertex_ind_table[0]];
-                    for (j=2; j<=next_face.num_vertices;j++){
+                    for (j=2; j<=next_face.num_vertices-1;j++){
                         vertex2 = next_object->vertex_table[next_face.vertex_ind_table[j-1]];
                         vertex3 = next_object->vertex_table[next_face.vertex_ind_table[j]];
                         
@@ -651,6 +648,13 @@ object3d *optr;
          optr->mptr->hptr = 0;
          optr->is_cam=0;*/
          //printf("objektu zerrendara doa informazioa...\n");
+         optr->mptr = (mlist *)malloc(sizeof(mlist));
+         for (i=0; i<16; i++) optr->mptr->m[i] =0;
+         optr->mptr->m[0] = 1.0;
+         optr->mptr->m[5] = 1.0;
+         optr->mptr->m[10] = 1.0;
+         optr->mptr->m[15] = 1.0;
+         optr->mptr->hptr = 0;
          optr->hptr = foptr;
          foptr = optr;
          sel_ptr = optr;
@@ -1208,8 +1212,6 @@ void set_camera(){
 void load_projection_mx(){
     float r,t,l,b,n,f;
     r = 5; t = 5; n = 5; l = -5; b = -5, f = 500; 
-    printf("%f\n",(r-l));
-    printf("%f\n",(t-b));
     projection_mx[0] = (2*n)/(r-l); projection_mx[1] = 0; projection_mx[2] = (r+l)/(r-l); projection_mx[3] = 0;
     projection_mx[4] = 0; projection_mx[5] = (2*n)/(t-b); projection_mx[6] = (t+b)/(t-b); projection_mx[7] = 0;
     projection_mx[8] = 0; projection_mx[9] = 0; projection_mx[10] = -(f+n)/(f-n); projection_mx[11] = (-2*f*n)/(f-n);
@@ -1257,11 +1259,11 @@ int retval;
         analisis_mode=0;
         set_camera();
         load_projection_mx();
-        print_matrizea(projection_mx);
         //matrix_calc(camera_by_mx,camera->m_esa,ca)
         if (argc>1) read_from_file(argv[1]);
             else{
-                read_from_file("k.obj"); 
+                read_from_file("k.obj");
+                printf("Object Loaded");
                 //foptr->mptr->m[3] = 250;
                 //foptr->mptr->m[11] = 250;
                 //read_from_file("z.txt");
