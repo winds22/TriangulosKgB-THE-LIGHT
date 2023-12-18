@@ -265,7 +265,8 @@ for (xkoord = c1x, zkoord=c1z, u=c1u, v=c1v, t=1; xkoord<=c2x; xkoord++, t= t-dt
     {
         colorv = color_textura(u,v);
     }
-    r= colorv[0];
+    
+    r=colorv[0];
     g=colorv[1];
     b=colorv[2];  
     //r = 0; g=0; b=0;
@@ -596,7 +597,6 @@ static void marraztu(void){
         {
         if (denak == 0) glClear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT );
         }
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-500.0, 500.0, -500.0, 500.0, -500, 500.0);
@@ -618,6 +618,7 @@ static void marraztu(void){
             }
         }
     }
+    glFlush();
 }
 
 void read_from_file(char *fitx)
@@ -1262,8 +1263,11 @@ int retval;
         //matrix_calc(camera_by_mx,camera->m_esa,ca)
         if (argc>1) read_from_file(argv[1]);
             else{
-                read_from_file("k.obj");
-                printf("Object Loaded");
+                //read_from_file("k.obj");
+                read_from_file("r_falke.obj");
+                foptr->mptr->m[3] = 250;
+                //read_from_file("x_wing.obj");
+                //foptr->mptr->m[3] = -250;
                 //foptr->mptr->m[3] = 250;
                 //foptr->mptr->m[11] = 250;
                 //read_from_file("z.txt");
