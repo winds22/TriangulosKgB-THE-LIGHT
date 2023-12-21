@@ -261,12 +261,12 @@ int is_facing(double * tri, punto p){
     }
     return 1;
 }
-void vertex_2_point(punto * p, vertex v){
-    p->u = v.u;
-    p->v = v.v;
-    p->x = v.coord.x;
-    p->y = v.coord.y;
-    p->z = v.coord.z;
+void vertex_2_point(punto * p, vertex vx){
+    p->u = vx.u;
+    p->v = vx.v;
+    p->x = vx.coord.x;
+    p->y = vx.coord.y;
+    p->z = vx.coord.z;
 }
 
 void objektuari_aldaketa_sartu_ezk(double m[16])
