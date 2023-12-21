@@ -1,7 +1,7 @@
 
 typedef struct punto
 {
-float x, y, z, u,v;
+    double x, y, z, u,v;
 } punto;
 
 typedef struct normal_v

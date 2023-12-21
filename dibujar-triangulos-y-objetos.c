@@ -661,7 +661,7 @@ static void marraztu(void){
         }
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-500.0, 500.0, -500.0, 500.0, -500, 500.0);
+    glOrtho(-500.0, 500.0, -500.0, 500.0, -500.0, 500.0);
 
     if (objektuak){
         if (denak){
@@ -1332,12 +1332,12 @@ int retval;
         if (argc>1) read_from_file(argv[1]);
             else{
                 //read_from_file("k.obj");
-                read_from_file("k.obj");
+                read_from_file("r_falke.obj");
                 foptr->mptr->m[3] = 200;
                 foptr->mptr->m[0] = 2;
                 foptr->mptr->m[5] = 2;
                 foptr->mptr->m[9] = 2;
-                //read_from_file("x_wing.obj");
+                read_from_file("x_wing.obj");
                 //foptr->mptr->m[3] = -200;
                 //foptr->mptr->m[0] = 5;
                 //foptr->mptr->m[5] = 5;
