@@ -161,6 +161,7 @@ void m_esa_calc(camera_obj *cam){
     cam->m_esa[12]=cam->m_obj[3]; cam->m_esa[13]=cam->m_obj[7]; cam->m_esa[14]=cam->m_obj[11]; cam->m_esa[15]=cam->m_obj[15];
 }
 
+/*
 void calc_v_normal(hiruki * tri, punto p1, punto p2, punto p3){
     float df1[3];
     float df2[3];
@@ -174,9 +175,60 @@ void calc_v_normal(hiruki * tri, punto p1, punto p2, punto p3){
     tri->bek_normal.x /= norm_len;
     tri->bek_normal.y /= norm_len;
     tri->bek_normal.z /= norm_len;
+}*/
+
+void calc_v_normal(double * tri, punto p1, punto p2, punto p3){
+    float df1[3];
+    float df2[3];
+    double norm_len;
+    df1[0] = p2.x - p1.x; df1[1] = p2.y - p1.y; df1[2] = p2.z - p1.z;
+    df2[0] = p3.x - p1.x; df2[1] = p3.y - p1.y; df2[2] = p3.z - p1.z;
+    tri[0] = (df1[1]*df2[2])-(df1[2]*df2[1]);
+    tri[1] = (df1[2]*df2[0])-(df1[0]*df2[2]);
+    tri[2] = (df1[0]*df2[1])-(df1[1]*df2[0]);
+    norm_len = sqrt(pow(tri[0],2)+pow(tri[1],2)+pow(tri[2],2));
+    tri[0] /= norm_len;
+    tri[1] /= norm_len;
+    tri[2] /= norm_len;
 }
 
+/* THE OLD
 int is_facing(hiruki * tri, punto p){
+    float cam_ray[3];
+    float tri_mod,cam_mod,mod;
+    double vn,ang;
+    punto p_cam;
+
+    p_cam.x = camera->m_obj[3];p_cam.y=camera->m_obj[7];p_cam.z=camera->m_obj[11];
+    //mxp(&p_cam,modelview,p_cam);
+    
+    // Show Point to Camera Line
+    /*glBegin(GL_LINES);
+    glVertex3d(p.x,p.y,p.z); //tri->p1.x,tri->p1.y,tri->p1.z
+    glVertex3d(p_cam.x,p_cam.y,p_cam.z);
+    glEnd();
+    
+    
+
+    cam_ray[0]= p_cam.x-p.x; //camera->m_obj[3]-p.x
+    cam_ray[1]= p_cam.y-p.y;
+    cam_ray[2]= p_cam.z-p.z;
+    cam_mod = sqrt(pow(cam_ray[0],2)+pow(cam_ray[1],2)+pow(cam_ray[2],2));
+    vn = (cam_ray[0]*tri->bek_normal.x) + (cam_ray[1]*tri->bek_normal.y) + (cam_ray[2]*tri->bek_normal.z);
+    
+    tri_mod = sqrt(pow(tri->bek_normal.x,2)+pow(tri->bek_normal.y,2)+pow(tri->bek_normal.z,2));
+    cam_mod = sqrt(pow(cam_ray[0],2)+pow(cam_ray[1],2)+pow(cam_ray[2],2));
+    mod = tri_mod * cam_mod;
+    ang = vn/mod;
+
+    if (ang<0){
+        return 0;
+    }
+    return 1;
+}
+*/
+
+int is_facing(double * tri, punto p){
     float cam_ray[3];
     float tri_mod,cam_mod,mod;
     double vn,ang;
@@ -197,9 +249,9 @@ int is_facing(hiruki * tri, punto p){
     cam_ray[1]= p_cam.y-p.y;
     cam_ray[2]= p_cam.z-p.z;
     cam_mod = sqrt(pow(cam_ray[0],2)+pow(cam_ray[1],2)+pow(cam_ray[2],2));
-    vn = (cam_ray[0]*tri->bek_normal.x) + (cam_ray[1]*tri->bek_normal.y) + (cam_ray[2]*tri->bek_normal.z);
+    vn = (cam_ray[0]*tri[0]) + (cam_ray[1]*tri[1]) + (cam_ray[2]*tri[2]);
     
-    tri_mod = sqrt(pow(tri->bek_normal.x,2)+pow(tri->bek_normal.y,2)+pow(tri->bek_normal.z,2));
+    tri_mod = sqrt(pow(tri[0],2)+pow(tri[1],2)+pow(tri[2],2));
     cam_mod = sqrt(pow(cam_ray[0],2)+pow(cam_ray[1],2)+pow(cam_ray[2],2));
     mod = tri_mod * cam_mod;
     ang = vn/mod;
@@ -209,7 +261,6 @@ int is_facing(hiruki * tri, punto p){
     }
     return 1;
 }
-
 void vertex_2_point(punto * p, vertex v){
     p->u = v.u;
     p->v = v.v;
@@ -458,18 +509,28 @@ if (perspective){
     }
 }
 
-//calc_v_normal(tptr, p1,p2,p3);
+calc_v_normal(&(vx1.N[0]), p1,p2,p3);
+calc_v_normal(&(vx2.N[0]), p1,p2,p3);
+calc_v_normal(&(vx3.N[0]), p1,p2,p3);
 //is_facing(tptr);
-/*
+
 if (show_normal_v) {
     glBegin(GL_LINES);
     glVertex3d(p1.x,p1.y,p1.z);
-    glVertex3d(p1.x+(100*tptr->bek_normal.x),p1.y+(100*tptr->bek_normal.y),p1.z+(100*tptr->bek_normal.z));
+    glVertex3d(p1.x+(100*vx1.N[0]),p1.y+(100*vx1.N[1]),p1.z+(100*vx1.N[2]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3d(p2.x,p2.y,p2.z);
+    glVertex3d(p2.x+(100*vx2.N[0]),p2.y+(100*vx2.N[1]),p2.z+(100*vx2.N[2]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3d(p3.x,p3.y,p3.z);
+    glVertex3d(p3.x+(100*vx3.N[0]),p3.y+(100*vx3.N[1]),p3.z+(100*vx3.N[2]));
     glEnd();
 }
 
-int is_facing_val = is_facing(tptr, p1);
-*/
+//int is_facing_val = is_facing(&(vx1.N[0]), p1);
+
 int is_facing_val = 1;
 if (lineak == 1){
     if (is_facing_val) {
@@ -491,9 +552,8 @@ if (lineak == 1){
     }
     return;
 }
-       
-        //  else 
-  
+             //  else 
+printf("SARTU");
 if(p1.y >=p2.y) {pgoiptr = &(p1); pbeheptr = &(p2);}
 else{pgoiptr = &(p2); pbeheptr = &(p1);}
 if(p3.y >= pgoiptr->y) {perdiptr = pgoiptr;pgoiptr = &(p3);}
@@ -512,6 +572,7 @@ if(perdiptr->y==pgoiptr->y && pgoiptr->x<=perdiptr->x){
 
 }
 
+printf("SARTU2\n");
 for(int i= pgoiptr->y;i>perdiptr->y;i--){
     ebakidura_kalk(pgoiptr, perdiptr, i, &p_sar);
     ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
@@ -588,6 +649,7 @@ static void marraztu(void){
     object3d * next_object;
     face next_face;
     vertex vertex1,vertex2,vertex3;
+    punto p1,p2,p3;
     int i,j;
     if (foptr ==0) return;
 
@@ -607,13 +669,19 @@ static void marraztu(void){
                 for (i = 0; i<=next_object->num_faces-1;i++){
                     next_face = next_object->face_table[i];
                     vertex1 = next_object->vertex_table[next_face.vertex_ind_table[0]];
+                    vertex_2_point(&p1,vertex1);
                     for (j=2; j<=next_face.num_vertices-1;j++){
                         vertex2 = next_object->vertex_table[next_face.vertex_ind_table[j-1]];
                         vertex3 = next_object->vertex_table[next_face.vertex_ind_table[j]];
                         
+                        //vertex_2_point(&p2,vertex2);
+                        //vertex_2_point(&p3,vertex3);
+
+                        //calc_v_normal(&(next_face.N[0]),p1,p2,p3);
+
                         dibujar_triangulo(vertex1,vertex2,vertex3,next_object);
-                        //TODO: DRAW TRIANGLE
                     }
+
                 }
             }
         }
@@ -1264,16 +1332,16 @@ int retval;
         if (argc>1) read_from_file(argv[1]);
             else{
                 //read_from_file("k.obj");
-                read_from_file("r_falke.obj");
-                foptr->mptr->m[3] = 250;
+                read_from_file("k.obj");
+                foptr->mptr->m[3] = 200;
+                foptr->mptr->m[0] = 2;
+                foptr->mptr->m[5] = 2;
+                foptr->mptr->m[9] = 2;
                 //read_from_file("x_wing.obj");
-                //foptr->mptr->m[3] = -250;
-                //foptr->mptr->m[3] = 250;
-                //foptr->mptr->m[11] = 250;
-                //read_from_file("z.txt");
-                //foptr->mptr->m[3] = -250;
-                //read_from_file("z.txt");
-                //foptr->mptr->m[7] = 150;
+                //foptr->mptr->m[3] = -200;
+                //foptr->mptr->m[0] = 5;
+                //foptr->mptr->m[5] = 5;
+                //foptr->mptr->m[9] = 5;
             }
         //read_from_file("cam.txt");
         //cam_obj_ptr = foptr;
