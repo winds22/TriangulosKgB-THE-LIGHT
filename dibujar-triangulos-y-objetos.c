@@ -108,6 +108,21 @@ pptr->u = p.u;
 pptr->v = p.v;
 }
 
+void calc_N_cam(double * ncam, double mx[16], double * n){
+    punto p;
+    p.x = n[0];
+    p.y = n[1];
+    p.z = n[2];
+    p.u = 0;
+    p.v = 0;
+
+    mxp(&(p),mx,p);
+
+    ncam[0]=p.x;
+    ncam[1]=p.y;
+    ncam[2]=p.z;
+}
+
 int mxprojection(punto * point, double mx[16], punto og_pnt){
     double nx,ny,nz,w;
 
@@ -192,6 +207,23 @@ void calc_v_normal(double * tri, punto p1, punto p2, punto p3){
     tri[2] /= norm_len;
 }
 
+void calc_vx_normal(double * tri, vertex * vx1, vertex * vx2, vertex * vx3){
+    double df1[3];
+    double df2[3];
+    double norm_len;
+
+    df1[0] = vx2->coord.x - vx1->coord.x; df1[1] = vx2->coord.y - vx1->coord.y; df1[2] = vx2->coord.z - vx1->coord.z;
+    df2[0] = vx3->coord.x - vx1->coord.x; df2[1] = vx3->coord.y - vx1->coord.y; df2[2] = vx3->coord.z - vx1->coord.z;
+
+    tri[0] = (df1[1]*df2[2])-(df1[2]*df2[1]);
+    tri[1] = (df1[2]*df2[0])-(df1[0]*df2[2]);
+    tri[2] = (df1[0]*df2[1])-(df1[1]*df2[0]);
+    norm_len = sqrt(pow(tri[0],2)+pow(tri[1],2)+pow(tri[2],2));
+    tri[0] /= norm_len;
+    tri[1] /= norm_len;
+    tri[2] /= norm_len;
+}
+
 /* THE OLD
 int is_facing(hiruki * tri, punto p){
     float cam_ray[3];
@@ -261,6 +293,7 @@ int is_facing(double * tri, punto p){
     }
     return 1;
 }
+
 void vertex_2_point(punto * p, vertex vx){
     p->u = vx.u;
     p->v = vx.v;
@@ -268,6 +301,7 @@ void vertex_2_point(punto * p, vertex vx){
     p->y = vx.coord.y;
     p->z = vx.coord.z;
 }
+
 
 void objektuari_aldaketa_sartu_ezk(double m[16])
 {
@@ -498,11 +532,15 @@ vertex_2_point(&p1,vx1);
 vertex_2_point(&p2,vx2);
 vertex_2_point(&p3,vx3);
 
+
 matrix_calc(modelview,camera->m_esa,obj->mptr->m);
 mxp(&p1,modelview,p1);
 mxp(&p2,modelview,p2);
 mxp(&p3,modelview,p3); //optr->mptr->m //optr->modelview
 
+calc_N_cam(&(vx1.Ncam[0]),modelview,&(vx1.N[0]));
+calc_N_cam(&(vx2.Ncam[0]),modelview,&(vx2.N[0]));
+calc_N_cam(&(vx3.Ncam[0]),modelview,&(vx3.N[0]));
 
 if (perspective){
     //matrix_calc(modelview2,projection_mx,modelview);
@@ -514,28 +552,29 @@ if (perspective){
     }
 }
 
-calc_v_normal(&(vx1.N[0]), p1,p2,p3);
-calc_v_normal(&(vx2.N[0]), p1,p2,p3);
-calc_v_normal(&(vx3.N[0]), p1,p2,p3);
+//calc_v_normal(&(vx1.N[0]), p1,p2,p3);
+//calc_v_normal(&(vx2.N[0]), p1,p2,p3);
+//calc_v_normal(&(vx3.N[0]), p1,p2,p3);
 //is_facing(tptr);
 
 if (show_normal_v) {
     glBegin(GL_LINES);
     glVertex3d(p1.x,p1.y,p1.z);
-    glVertex3d(p1.x+(100*vx1.N[0]),p1.y+(100*vx1.N[1]),p1.z+(100*vx1.N[2]));
+    glVertex3d(p1.x+(100*vx1.Ncam[0]),p1.y+(100*vx1.Ncam[1]),p1.z+(100*vx1.Ncam[2]));
     glEnd();
+
     glBegin(GL_LINES);
     glVertex3d(p2.x,p2.y,p2.z);
-    glVertex3d(p2.x+(100*vx2.N[0]),p2.y+(100*vx2.N[1]),p2.z+(100*vx2.N[2]));
+    glVertex3d(p2.x+(100*vx2.Ncam[0]),p2.y+(100*vx2.Ncam[1]),p2.z+(100*vx2.Ncam[2]));
     glEnd();
+
     glBegin(GL_LINES);
     glVertex3d(p3.x,p3.y,p3.z);
-    glVertex3d(p3.x+(100*vx3.N[0]),p3.y+(100*vx3.N[1]),p3.z+(100*vx3.N[2]));
+    glVertex3d(p3.x+(100*vx3.Ncam[0]),p3.y+(100*vx3.Ncam[1]),p3.z+(100*vx3.Ncam[2]));
     glEnd();
 }
 
-//int is_facing_val = is_facing(&(vx1.N[0]), p1);
-
+//int is_facing_val = is_facing(&(vx1.Ncam[0]), p1);
 int is_facing_val = 1;
 if (lineak == 1){
     if (is_facing_val) {
@@ -666,8 +705,11 @@ static void marraztu(void){
         }
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-500.0, 500.0, -500.0, 500.0, -500.0, 500.0);
-
+    if(perspective){
+        glOrtho(-500.0, 500.0, -500.0, 500.0, 0, 500.0);
+    }else{
+        glOrtho(-500.0, 500.0, -500.0, 500.0, -500.0, 500.0);
+    }
     if (objektuak){
         if (denak){
             for(next_object = foptr; next_object!=0; next_object=next_object->hptr){
@@ -678,11 +720,6 @@ static void marraztu(void){
                     for (j=2; j<=next_face.num_vertices-1;j++){
                         vertex2 = next_object->vertex_table[next_face.vertex_ind_table[j-1]];
                         vertex3 = next_object->vertex_table[next_face.vertex_ind_table[j]];
-                        
-                        //vertex_2_point(&p2,vertex2);
-                        //vertex_2_point(&p3,vertex3);
-
-                        //calc_v_normal(&(next_face.N[0]),p1,p2,p3);
 
                         dibujar_triangulo(vertex1,vertex2,vertex3,next_object);
                     }
@@ -696,8 +733,11 @@ static void marraztu(void){
 
 void read_from_file(char *fitx)
 {
-int i,retval;
+int i,j,retval;
 object3d *optr;
+face obj_face;
+vertex vertex1,vertex2,vertex3;
+point3 p1,p2,p3;
 
     //printf("%s fitxategitik datuak hartzera\n",fitx);
     optr = (object3d *)malloc(sizeof(object3d));
@@ -710,18 +750,6 @@ object3d *optr;
          }
        else
          {
-            /*
-         triangulosptr = optr->triptr;
-         //printf("objektuaren matrizea...\n");
-         optr->mptr = (mlist *)malloc(sizeof(mlist));
-         for (i=0; i<16; i++) optr->mptr->m[i] =0;
-         optr->mptr->m[0] = 1.0;
-         optr->mptr->m[5] = 1.0;
-         optr->mptr->m[10] = 1.0;
-         optr->mptr->m[15] = 1.0;
-         optr->mptr->hptr = 0;
-         optr->is_cam=0;*/
-         //printf("objektu zerrendara doa informazioa...\n");
          optr->mptr = (mlist *)malloc(sizeof(mlist));
          for (i=0; i<16; i++) optr->mptr->m[i] =0;
          optr->mptr->m[0] = 1.0;
@@ -731,6 +759,19 @@ object3d *optr;
          optr->mptr->hptr = 0;
          optr->hptr = foptr;
          foptr = optr;
+
+        
+         for (i = 0; i<=foptr->num_faces-1;i++){
+            obj_face = foptr->face_table[i];
+            vertex1 = foptr->vertex_table[obj_face.vertex_ind_table[0]];
+            for (j=2; j<=obj_face.num_vertices-1;j++){
+                vertex2 = foptr->vertex_table[obj_face.vertex_ind_table[j-1]];
+                vertex3 = foptr->vertex_table[obj_face.vertex_ind_table[j]];
+
+                calc_vx_normal(&(vertex2.N[0]),&(vertex2),&(vertex1),&(vertex3));
+
+            }  
+         }
          sel_ptr = optr;
          }
      printf("datuak irakurrita\nLecura finalizada\n");
@@ -1329,20 +1370,20 @@ int retval;
         camera = (camera_obj *)malloc(sizeof(camera_obj));
         camera_selected=0;
         object_as_camera=0;
-        show_normal_v = 0;
+        show_normal_v = 1;
         analisis_mode=0;
         set_camera();
         load_projection_mx();
         //matrix_calc(camera_by_mx,camera->m_esa,ca)
         if (argc>1) read_from_file(argv[1]);
             else{
-                //read_from_file("k.obj");
-                read_from_file("r_falke.obj");
-                foptr->mptr->m[3] = 200;
+                read_from_file("k.obj");
+                //read_from_file("r_falke.obj");
+                foptr->mptr->m[3] = 100;
                 foptr->mptr->m[0] = 2;
                 foptr->mptr->m[5] = 2;
                 foptr->mptr->m[9] = 2;
-                read_from_file("x_wing.obj");
+                //read_from_file("x_wing.obj");
                 //foptr->mptr->m[3] = -200;
                 //foptr->mptr->m[0] = 5;
                 //foptr->mptr->m[5] = 5;
