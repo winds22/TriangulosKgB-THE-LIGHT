@@ -7,7 +7,7 @@
 // to compile it: gcc dibujar-triangulos-y-objetos.c -lGL -lGLU -lglut
 //
 //
-//
+// 
 
 #include <GL/glut.h>
 #include <stdio.h>
