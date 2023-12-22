@@ -295,7 +295,7 @@ lag = (unsigned char *)bufferra;  // pixel on the left and top
 return(lag+3*desplazamendua);
 }
 
-void  dibujar_linea_z(int linea,float c1x, float c1z, float c1u,float c1v,float c2x,float c2z,float c2u,float c2v)
+void  dibujar_linea_z(int linea,double c1x, double c1z, double c1u,double c1v,double c2x,double c2z,double c2u,double c2v)
 {
 float xkoord,zkoord;
 float u,v,t,dt,cx,cz,cu,cv;
@@ -312,16 +312,20 @@ if (c2x == c1x){
     dt = 1/(c2x-c1x);
 }
 
+
 for (xkoord = c1x, zkoord=c1z, u=c1u, v=c1v, t=1; xkoord<=c2x; xkoord++, t= t-dt)
     {
-        colorv = color_textura(u,v);
-    }
-    
+        //colorv = color_textura(u,v);
+        //colorv[0] = '0'; colorv[1] = '100'; colorv[2] = '255'; 
+    /*
     r=colorv[0];
     g=colorv[1];
     b=colorv[2];  
     //r = 0; g=0; b=0;
-
+    */
+   r='z';
+   g='1';
+   b='c';
 
     glColor3ub(r,g,b);
     glVertex3f(xkoord, linea, zkoord );
@@ -330,6 +334,7 @@ for (xkoord = c1x, zkoord=c1z, u=c1u, v=c1v, t=1; xkoord<=c2x; xkoord++, t= t-dt
     v = t*c1v + (1-t)*c2v;
     zkoord = t*c1z + (1-t)*c2z;
     //zkoord = 0.0;
+    }
 glEnd();
 }
 
@@ -573,18 +578,18 @@ if(perdiptr->y==pgoiptr->y && pgoiptr->x<=perdiptr->x){
 }
 
 printf("SARTU2\n");
-for(int i= pgoiptr->y;i>perdiptr->y;i--){
+for(int i= pgoiptr->y;i>perdiptr->y;i--){ printf(".");
     ebakidura_kalk(pgoiptr, perdiptr, i, &p_sar);
     ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
     if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
     dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v);
 }
-for(int i=perdiptr->y;i>pbeheptr->y;i--){
+for(int i=perdiptr->y;i>pbeheptr->y;i--){ printf(":");
     ebakidura_kalk(perdiptr, pbeheptr, i, &p_sar);
     ebakidura_kalk(pgoiptr, pbeheptr, i, &p_irt);
     if(p_sar.x>p_irt.x){p_help = p_sar;p_sar = p_irt;p_irt = p_help;}
     dibujar_linea_z(i, p_sar.x, p_sar.z, p_sar.u, p_sar.v, p_irt.x, p_irt.z, p_irt.u, p_irt.v);
-}
+} printf("\n");
 }
 
 //THE OLD 
