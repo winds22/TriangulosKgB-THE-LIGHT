@@ -224,6 +224,48 @@ void calc_vx_normal(double * tri, vertex * vx1, vertex * vx2, vertex * vx3){
     tri[2] /= norm_len;
 }
 
+void calc_face_vn(){
+    int i;
+    face face_obj;
+    vertex vx1,vx2,vx3;
+    for (i = 0; i<=foptr->num_faces-1;i++){
+        face_obj = foptr->face_table[i];
+        vx1 = foptr->vertex_table[face_obj.vertex_ind_table[0]];
+        vx2 = foptr->vertex_table[face_obj.vertex_ind_table[1]];
+        vx3 = foptr->vertex_table[face_obj.vertex_ind_table[2]];
+
+        calc_vx_normal(&(face_obj.N[0]),&(vx1),&(vx2),&(vx3));
+    }
+}
+
+void calc_vertex_vn(){
+    int i,j,k;
+    double v_normal;
+    vertex vx;
+    face face_obj;
+    for(i=0; i<=foptr->num_vertices-1;i++){
+        vx = foptr->vertex_table[i];
+        vx.N[0]=0;
+        vx.N[1]=0;
+        vx.N[2]=0;
+        for (j = 0; j<=foptr->num_faces-1;j++){
+            face_obj = foptr->face_table[j];
+            for (k=0; k<=face_obj.num_vertices;k++){
+                if (i == face_obj.vertex_ind_table[k]){
+                    vx.N[0]+=face_obj.N[0];
+                    vx.N[1]+=face_obj.N[1];
+                    vx.N[2]+=face_obj.N[2];
+                    break;
+                }
+            }
+        }
+        v_normal = calc_normal(&(vx.N[0]));
+        vx.N[0]/=v_normal;
+        vx.N[1]/=v_normal;
+        vx.N[2]/=v_normal;
+    }
+}
+
 /* THE OLD
 int is_facing(hiruki * tri, punto p){
     float cam_ray[3];
@@ -760,18 +802,9 @@ point3 p1,p2,p3;
          optr->hptr = foptr;
          foptr = optr;
 
-        
-         for (i = 0; i<=foptr->num_faces-1;i++){
-            obj_face = foptr->face_table[i];
-            vertex1 = foptr->vertex_table[obj_face.vertex_ind_table[0]];
-            for (j=2; j<=obj_face.num_vertices-1;j++){
-                vertex2 = foptr->vertex_table[obj_face.vertex_ind_table[j-1]];
-                vertex3 = foptr->vertex_table[obj_face.vertex_ind_table[j]];
+         calc_face_vn();
+         calc_vertex_vn();
 
-                calc_vx_normal(&(vertex2.N[0]),&(vertex2),&(vertex1),&(vertex3));
-
-            }  
-         }
          sel_ptr = optr;
          }
      printf("datuak irakurrita\nLecura finalizada\n");
