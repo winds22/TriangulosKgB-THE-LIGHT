@@ -71,7 +71,6 @@ int analisis_mode;
 int camera_selected; //0= Object selected, 1= Camera selected
 int object_as_camera; //0= Camera is not an Object, 1= Camera is an object
 double modelview[16];
-double modelview2[16];
 double camera_by_mx[16];
 double projection_mx[16];
 
@@ -107,6 +106,13 @@ pptr->z = (m[8]*p.x)+(m[9]*p.y)+(m[10]*p.z)+m[11];
 pptr->u = p.u;
 pptr->v = p.v;
 }
+
+void mxp3(point3 * end_p, double m[16], point3 * source_p){
+    end_p->x = (m[0]*source_p->x)+(m[1]*source_p->y)+(m[2]*source_p->z)+m[3];
+    end_p->y = (m[4]*source_p->x)+(m[5]*source_p->y)+(m[6]*source_p->z)+m[7];
+    end_p->z = (m[8]*source_p->x)+(m[9]*source_p->y)+(m[10]*source_p->z)+m[11];
+}
+
 
 void calc_N_cam(double * ncam, double mx[16], double * n){
     punto p;
@@ -266,6 +272,25 @@ void calc_vertex_vn(){
     }
 }
 
+void calc_faces_center(object3d * obj){
+    face obj_face;
+    double xc, yc, zc;
+    for(int i = 0; i<obj->num_faces;i++){
+        obj_face = obj->face_table[i];
+        xc=0;
+        yc=0;
+        zc=0;
+        for (int j = 0; j<obj_face.num_vertices;j++){
+            xc+= obj->vertex_table[obj_face.vertex_ind_table[j]].coord.x;
+            yc+= obj->vertex_table[obj_face.vertex_ind_table[j]].coord.y;
+            zc+= obj->vertex_table[obj_face.vertex_ind_table[j]].coord.z;
+        }
+        obj_face.center_coord.x = xc/obj_face.num_vertices;
+        obj_face.center_coord.y = yc/obj_face.num_vertices;
+        obj_face.center_coord.z = zc/obj_face.num_vertices;
+    }
+}
+
 /* THE OLD
 int is_facing(hiruki * tri, punto p){
     float cam_ray[3];
@@ -339,9 +364,9 @@ int is_facing(double * tri, punto p){
 void vertex_2_point(punto * p, vertex vx){
     p->u = vx.u;
     p->v = vx.v;
-    p->x = vx.coord.x;
-    p->y = vx.coord.y;
-    p->z = vx.coord.z;
+    p->x = vx.camcoord.x;
+    p->y = vx.camcoord.y;
+    p->z = vx.camcoord.z;
 }
 
 
@@ -560,6 +585,24 @@ for(int i=perdiptr->y;i>pbeheptr->y;i--){
 }
 */
 
+void draw_vertex_nv(vertex vx){
+    glBegin(GL_LINES);
+    glVertex3d(vx.camcoord.x, vx.camcoord.y, vx.camcoord.z);
+    glVertex3d(vx.camcoord.x+(100*vx.Ncam[0]), vx.camcoord.y+(100*vx.Ncam[1]),vx.camcoord.z+(100*vx.Ncam[2]));
+    glEnd();
+}
+
+void draw_face_nv(face * fc){
+    glBegin(GL_LINES);
+    
+    glVertex3d(fc->center_camcoord.x, fc->center_camcoord.y, fc->center_camcoord.z);
+    glVertex3d(fc->center_camcoord.x+(100*fc->Ncam[0]), 
+                fc->center_camcoord.y+(100*fc->Ncam[1]),
+                fc->center_camcoord.z+(100*fc->Ncam[2]));
+
+    glEnd();
+}
+
 //THE NEW
 void dibujar_triangulo(vertex vx1, vertex vx2, vertex vx3, object3d * obj)
 {
@@ -570,22 +613,13 @@ float c1x,c1z,c1u,c1v,c2x,c2z,c2u,c2v,tald,qald,sald;
 int linea,t,q,s,xpersp,ypersp,zpersp;
 float cambio1,cambio1z,cambio1u,cambio1v,cambio2,cambio2z,cambio2u,cambio2v;
 punto p1,p2,p3,p_sar,p_irt,p_help;
+
 vertex_2_point(&p1,vx1);
 vertex_2_point(&p2,vx2);
 vertex_2_point(&p3,vx3);
 
 
-matrix_calc(modelview,camera->m_esa,obj->mptr->m);
-mxp(&p1,modelview,p1);
-mxp(&p2,modelview,p2);
-mxp(&p3,modelview,p3); //optr->mptr->m //optr->modelview
-
-calc_N_cam(&(vx1.Ncam[0]),modelview,&(vx1.N[0]));
-calc_N_cam(&(vx2.Ncam[0]),modelview,&(vx2.N[0]));
-calc_N_cam(&(vx3.Ncam[0]),modelview,&(vx3.N[0]));
-
 if (perspective){
-    //matrix_calc(modelview2,projection_mx,modelview);
     xpersp=mxprojection(&p1,projection_mx,p1);
     ypersp=mxprojection(&p2,projection_mx,p2);
     zpersp=mxprojection(&p3,projection_mx,p3);
@@ -594,26 +628,12 @@ if (perspective){
     }
 }
 
-//calc_v_normal(&(vx1.N[0]), p1,p2,p3);
-//calc_v_normal(&(vx2.N[0]), p1,p2,p3);
-//calc_v_normal(&(vx3.N[0]), p1,p2,p3);
 //is_facing(tptr);
 
 if (show_normal_v) {
-    glBegin(GL_LINES);
-    glVertex3d(p1.x,p1.y,p1.z);
-    glVertex3d(p1.x+(100*vx1.Ncam[0]),p1.y+(100*vx1.Ncam[1]),p1.z+(100*vx1.Ncam[2]));
-    glEnd();
-
-    glBegin(GL_LINES);
-    glVertex3d(p2.x,p2.y,p2.z);
-    glVertex3d(p2.x+(100*vx2.Ncam[0]),p2.y+(100*vx2.Ncam[1]),p2.z+(100*vx2.Ncam[2]));
-    glEnd();
-
-    glBegin(GL_LINES);
-    glVertex3d(p3.x,p3.y,p3.z);
-    glVertex3d(p3.x+(100*vx3.Ncam[0]),p3.y+(100*vx3.Ncam[1]),p3.z+(100*vx3.Ncam[2]));
-    glEnd();
+    draw_vertex_nv(vx1);
+    draw_vertex_nv(vx2);
+    draw_vertex_nv(vx3);
 }
 
 //int is_facing_val = is_facing(&(vx1.Ncam[0]), p1);
@@ -755,14 +775,29 @@ static void marraztu(void){
     if (objektuak){
         if (denak){
             for(next_object = foptr; next_object!=0; next_object=next_object->hptr){
+                matrix_calc(modelview,camera->m_esa,next_object->mptr->m);
                 for (i = 0; i<=next_object->num_faces-1;i++){
                     next_face = next_object->face_table[i];
                     vertex1 = next_object->vertex_table[next_face.vertex_ind_table[0]];
-                    vertex_2_point(&p1,vertex1);
+
+                    //mxp3(&(next_face.center_camcoord),modelview,&(next_face.center_coord));
+                    //calc_N_cam(&(next_face.Ncam[0]),modelview,&(next_face.N[0]));
+                    //draw_face_nv(&next_face);
+
+
+                    mxp3(&(vertex1.camcoord),modelview,&(vertex1.coord));
+                    calc_N_cam(&(vertex1.Ncam[0]),modelview,&(vertex1.N[0]));
+                    
                     for (j=2; j<=next_face.num_vertices-1;j++){
                         vertex2 = next_object->vertex_table[next_face.vertex_ind_table[j-1]];
                         vertex3 = next_object->vertex_table[next_face.vertex_ind_table[j]];
 
+                        mxp3(&(vertex2.camcoord),modelview,&(vertex2.coord));
+                        calc_N_cam(&(vertex2.Ncam[0]),modelview,&(vertex2.N[0]));
+
+                        mxp3(&(vertex3.camcoord),modelview,&(vertex3.coord));
+                        calc_N_cam(&(vertex3.Ncam[0]),modelview,&(vertex3.N[0]));
+                        
                         dibujar_triangulo(vertex1,vertex2,vertex3,next_object);
                     }
 
@@ -804,6 +839,8 @@ point3 p1,p2,p3;
 
          calc_face_vn();
          calc_vertex_vn();
+         calc_faces_center(foptr);
+
 
          sel_ptr = optr;
          }

@@ -88,6 +88,9 @@ typedef struct {
  * polygons                 *
  ****************************/
 typedef struct {
+    point3 center_coord;
+    point3 center_camcoord;
+    point3 center_proedcoord;
     int num_vertices;                 /* number of vertices in the face */
     int *vertex_ind_table;                /* table with the index of each vertex */
     double N[3];
